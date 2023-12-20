@@ -3,7 +3,6 @@ import sys
 import itertools
 
 
-file_path = os.path.join('/Users/thiamaziz/Desktop/Master 1/RCR/Argumentation/Projet', 'test_af1.apx')
 arguments = set()
 attacks = set()
 
@@ -27,19 +26,6 @@ def process_line(line, line_number):
         else:
             print(f"Error on line {line_number}: Please change the argument name.")
             sys.exit(1)  # Terminate the program with an exit code
-
-if os.path.exists(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            for line_number, line in enumerate(file, start=1):
-                process_line(line, line_number)
-
-    except (FileNotFoundError, IOError) as e:
-        print(f"An error occurred: {e}")
-        sys.exit(1)  # Terminate the program with an exit code
-else:
-    print(f"The file {file_path} does not exist.")
-    sys.exit(1)  # Terminate the program with an exit code
 
 
 def is_attacked(arg, attacks):
@@ -401,7 +387,7 @@ class Dung:
 						if set(x).union(get_attacked_args(set(x), self.af._Dung__relations)) == self.af._Dung__arguments:
 							stb.append(x)
 				ext = Extensions(stb, self.af._Dung__arguments)
-				return ext
+				return ext 
 			else:
 				return None
 
@@ -437,30 +423,107 @@ class Dung:
 			else:
 				return None
 
-def decide(elem, arg,set):
+def decide(elem, arg,set1):
     if elem in arg:
-        if elem in set:
+        if elem in set1:
             print("YES")
         else:
             print("NO")
     else:
         print("Argument not known")
-         
+
+
+def verify(set1, arg, bigset):
+    for argument in set1:
+        if argument not in arg:
+            print(f"Error argument \"{argument}\"  not my arguments, Please change the argument name.")
+            sys.exit(1) 
+    if set1 in bigset:
+        print("YES")
+    else:
+        print("NO")
+
+def process_data(input_data):
+    # Check if input_data contains commas
+    if ',' in input_data:
+        # If commas are present, split the data and store it in a tuple
+        dataDecide =sorted( tuple(map(str.strip, input_data.split(','))))
+    else:
+        # If no commas, store the single alphanumeric word
+        dataDecide = input_data.strip()
+
+    return dataDecide
+
+
+def main():
+    if len(sys.argv) < 5:
+        print("Usage: python test_af1.py -p [VE-CO | VE-ST | DC-CO | DS-CO | DC-ST | DS-ST] -f FILE -a ARG1,ARG2,...,ARGn")
+        sys.exit(1)
+
+    problem_type = sys.argv[2]
+    file_path = sys.argv[4]
+    query_args = sys.argv[6]
     
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, 'r') as file:
+                for line_number, line in enumerate(file, start=1):
+                    process_line(line, line_number)
 
-AF = Dung(arguments, attacks)
-st = AF.semantics.compute_stable_extensions()
-co = AF.semantics.compute_complete_extensions()
+        except (FileNotFoundError, IOError) as e:
+            print(f"An error occurred: {e}")
+            sys.exit(1)  # Terminate the program with an exit code
+    else:
+        print(f"The file {file_path} does not exist.")
+        sys.exit(1)  #  Terminate the program with an exit code
+    
+    AF = Dung(arguments, attacks)
+    
+    st = AF.semantics.compute_stable_extensions()
+    co = AF.semantics.compute_complete_extensions()
+    
+    st_ext=st.get_Extensions()
+    co_ext=co.get_Extensions()
 
-stable_ext= st.get_Extensions()
-stable_cred= st.get_CredulouslyAcceptedArguments()
-stable_skep=st.get_SkepticallyAcceptedArguments()
+    
+    
+    st_skep=st.get_SkepticallyAcceptedArguments()
 
-decide("E",arguments,stable_cred)
+    co_skep=co.get_SkepticallyAcceptedArguments()
+    
+    st_cred=st.get_CredulouslyAcceptedArguments()
+    co_cred=co.get_CredulouslyAcceptedArguments()
+    
+    argument_or_set= process_data(query_args)
+    
+    
+    if problem_type == "VE-CO":
+       print("The complete one is : ",co_ext)
 
-co_ext=co.get_Extensions()
-co_cred= co.get_CredulouslyAcceptedArguments()
-co_skep=co.get_SkepticallyAcceptedArguments()
+    elif problem_type == "VE-ST":
+        print("The stable one is : ",st_ext)
+       
 
 
+    elif problem_type in ["DC-CO", "DS-CO", "DC-ST", "DS-ST"]:
+      
+        if problem_type == "DC-CO":
+            print("The co_cred one is : ",co_cred)
+            decide(argument_or_set, arguments,co_cred)
+        elif problem_type == "DS-CO":
+            print("The co_skep one is : ",co_skep)
+            decide(argument_or_set, arguments,co_skep)
+        elif problem_type == "DC-ST":
+            print("The st_cred one is : ",st_cred)
+            decide(argument_or_set, arguments,st_cred)
+        elif problem_type == "DS-ST":
+            print("The st_skep one is : ",st_skep)
+            decide(argument_or_set, arguments,st_skep)
+ 
+    
+    
+        
+
+if __name__ == "__main__":
+    main()
 

@@ -3,7 +3,6 @@ arg(B)
 arg(C).
 arg(D).
 arg(E).
-
 att(A,B).
 att(B,A).
 att(A,C).
