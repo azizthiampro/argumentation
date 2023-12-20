@@ -437,6 +437,16 @@ class Dung:
 			else:
 				return None
 
+def decide(elem, arg,set):
+    if elem in arg:
+        if elem in set:
+            print("YES")
+        else:
+            print("NO")
+    else:
+        print("Argument not known")
+         
+    
 
 AF = Dung(arguments, attacks)
 st = AF.semantics.compute_stable_extensions()
@@ -445,6 +455,8 @@ co = AF.semantics.compute_complete_extensions()
 stable_ext= st.get_Extensions()
 stable_cred= st.get_CredulouslyAcceptedArguments()
 stable_skep=st.get_SkepticallyAcceptedArguments()
+
+decide("E",arguments,stable_cred)
 
 co_ext=co.get_Extensions()
 co_cred= co.get_CredulouslyAcceptedArguments()
