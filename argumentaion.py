@@ -1,52 +1,70 @@
 import os
+import sys
+import itertools
+
 
 file_path = os.path.join('/Users/thiamaziz/Desktop/Master 1/RCR/Argumentation/Projet', 'test_af1.apx')
-arg = set()
+arguments = set()
 attacks = set()
+
+def is_valid_argument(arg):
+    return arg.isalnum() and arg not in {"arg", "att"}
+
+def process_line(line, line_number):
+    stripped_line = line.strip()
+    if stripped_line.startswith(("arg(", "att(")):
+        parts = stripped_line.split("(")
+        command, item = parts[0], parts[1].rstrip(').')
+        if command == "arg" and is_valid_argument(item):
+            arguments.add(item)
+        elif command == "att":
+            items = item.split(",")
+            if all(arg in arguments for arg in items):
+                attacks.add(tuple(items))
+            else:
+                print(f"Error on line {line_number}: Arguments in attack not defined before use.")
+                sys.exit(1)  # Terminate the program with an exit code
+        else:
+            print(f"Error on line {line_number}: Please change the argument name.")
+            sys.exit(1)  # Terminate the program with an exit code
 
 if os.path.exists(file_path):
     try:
         with open(file_path, 'r') as file:
-            for line in file:
-                stripped_line = line.strip()
-                if stripped_line.startswith(("arg(", "att(")):
-                    item = stripped_line[4] if stripped_line.startswith("arg(") else stripped_line[4:7:2]
-                    (arg if "arg(" in stripped_line else attacks).add(item)
-
-        # Convert items in actions set to tuples
-        attacks = {tuple(item) for item in attacks}
+            for line_number, line in enumerate(file, start=1):
+                process_line(line, line_number)
 
     except (FileNotFoundError, IOError) as e:
         print(f"An error occurred: {e}")
+        sys.exit(1)  # Terminate the program with an exit code
 else:
     print(f"The file {file_path} does not exist.")
-
-print("Les arguments sont :", arg)
-print("Les actions sont :", attacks)
+    sys.exit(1)  # Terminate the program with an exit code
 
 
-#==========================================================================================
-def is_attacked(element, attacks):
-	for x in attacks:
-		if x[1] == element:
-			return True
-	return False
-
-
-#==========================================================================================
-
+def is_attacked(arg, attacks):
+    return any(x[1] == arg for x in attacks)
 
 def get_arg_attackers(arg, attacks):
+	"""
+	Given an argument "arg" and the attack relations "attacks" return a set
+	of arguments that attacks "arg".
 
+	Parameters
+	----------
+	arg (str or int): An argument
+	attacks (list of 2-uples): Attack relations
+
+	Returns
+	-------
+	Set: Set of arguments that attacks "arg".
+
+	"""
 	attackers = set()
 	for i in attacks:
 		if i[1] == arg:
 			attackers.add(i[0])
 	return attackers
-
-
-
-#==========================================================================================
 
 def get_attacked_args(set_of_args, attacks):
 	"""
@@ -68,7 +86,7 @@ def get_attacked_args(set_of_args, attacks):
 		if i[0] in set_of_args:
 			attacked.add(i[1])
 	return attacked
-#==========================================================================================
+
 
 
 def powerset(iterable):
@@ -87,7 +105,6 @@ def powerset(iterable):
 	s = list(iterable)
 	return set(itertools.chain.from_iterable(itertools.combinations(s, r) for r in range(len(s) + 1)))
 
-#==========================================================================================
 
 def compute_acceptability(arg, E, relations):
 	"""
@@ -124,7 +141,6 @@ def compute_acceptability(arg, E, relations):
 		else:
 			return False
 
-#==========================================================================================
 
 def checkArgumentsInRelations(arguments, relations):
 	"""
@@ -157,7 +173,6 @@ def checkArgumentsInRelations(arguments, relations):
 	else:
 		return False
 
-#==========================================================================================
 
 class Extensions:
 	"""
@@ -178,8 +193,7 @@ class Extensions:
 		Return skeptiacally accepted arguments
 	get_CredulouslyAcceptedArguments()
 		Return credulously accepted arguments
-	get_RejectedArguments()
-		Return rejected arguments
+	
     """
 	def __init__(self, extensions, arguments):
 		self.__extensions = extensions
@@ -248,32 +262,7 @@ class Extensions:
 		return accepted
 
 				
-	def get_RejectedArguments(self):
-		"""
-		Return set of rejected arguments
 
-		Parameters
-		----------
-		None
-
-		Returns
-		-------
-		Set: Rejected arguments
-
-		"""
-		rejected = set()
-		if len(self.__extensions) > 0:
-			for a in self.__arguments:
-				lst = []
-				for extension in self.__extensions:
-					if a in extension:
-						lst.append(False)
-					else:
-						lst.append(True)
-					if all(lst):
-						rejected.add(a)
-		return rejected
-#==========================================================================================
 
 class Dung:
 	"""
@@ -332,7 +321,6 @@ class Dung:
 					for e in dele:
 						pwr.remove(e)
 		return set(pwr)
-#==========================================================================================
 
 
 	def compute_admissibility(self):
@@ -384,7 +372,6 @@ class Dung:
 				return []
 		else:
 			return None
-#==========================================================================================
 
 	
 	class Semantics:
@@ -414,81 +401,6 @@ class Dung:
 						if set(x).union(get_attacked_args(set(x), self.af._Dung__relations)) == self.af._Dung__arguments:
 							stb.append(x)
 				ext = Extensions(stb, self.af._Dung__arguments)
-				return ext
-			else:
-				return None
-
-		
-		def compute_grounded_extensions(self):
-			"""
-			E is the (unique) grounded extension of AF only if it is the smallest element 
-			(with respect to set inclusion) among the complete extensions of S.
-
-			Parameters
-			----------
-			None
-
-			Returns
-			-------
-			Set: Grounded extensions subsets
-
-			"""
-			if checkArgumentsInRelations(self.af._Dung__arguments, self.af._Dung__relations) == True:
-				grd = []
-				compExt = self.af.semantics.compute_complete_extensions()
-				count = 0
-				l = -99
-				ce = compExt.get_Extensions()
-				if len(ce)>0:
-					for conj in ce:
-						if count == 0:
-							l = len(conj)
-						else:
-							if len(conj) < l:
-								l = len(conj)
-						count+=1
-					
-					for x in ce:
-						if len(x) == l:
-							grd.append(x)
-
-				ext = Extensions(grd, self.af._Dung__arguments)
-				
-				return ext
-			else:
-				return None
-
-		
-		def compute_preferred_extensions(self):
-			"""
-			E is a preferred extension of AF only if it is a maximal element
-			(with respect to the set-theoretical inclusion) among the admissible sets
-			with respect to AF.
-
-			Parameters
-			----------
-			None
-
-			Returns
-			-------
-			Set: Preferred extensions subsets
-
-			"""
-			if checkArgumentsInRelations(self.af._Dung__arguments, self.af._Dung__relations) == True:
-				pref = []
-				adm = self.af.compute_admissibility()
-				if len(adm) > 0:
-					maxLen = 0
-					## busco el conjunto admisible más grande
-					for i in adm:
-						if len(i) > maxLen:
-							maxLen = len(i)
-						## busco el conjunto admisible con número de elementos == maxLen
-					for i in adm:
-						if len(i) == maxLen:
-							pref.append(i)
-
-				ext = Extensions(pref, self.af._Dung__arguments)
 				return ext
 			else:
 				return None
@@ -524,4 +436,19 @@ class Dung:
 				return ext
 			else:
 				return None
+
+
+AF = Dung(arguments, attacks)
+st = AF.semantics.compute_stable_extensions()
+co = AF.semantics.compute_complete_extensions()
+
+stable_ext= st.get_Extensions()
+stable_cred= st.get_CredulouslyAcceptedArguments()
+stable_skep=st.get_SkepticallyAcceptedArguments()
+
+co_ext=co.get_Extensions()
+co_cred= co.get_CredulouslyAcceptedArguments()
+co_skep=co.get_SkepticallyAcceptedArguments()
+
+
 
