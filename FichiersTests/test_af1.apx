@@ -2,6 +2,10 @@ arg(A).
 arg(B)
 arg(C).
 arg(D).
+arg(E).
 att(A,B).
+att(B,A).
+att(A,C).
 att(B,C).
-att(B,D).
+att(C,D).
+att(D,E).
