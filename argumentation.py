@@ -281,6 +281,9 @@ def verify_stable(set1, arg, bigset):
 # Function to process input data
 
 def process_data(input_data):
+    if input_data== "arg" or input_data=="att":
+        print(f"An argument cannot be named {input_data}")
+        sys.exit(1)
     # Check if input_data contains commas
     if ',' in input_data:
         # If commas are present, split the data and store it in a tuple
@@ -312,8 +315,8 @@ def main():
     else:
          problem_type = sys.argv[2]
          file_path = sys.argv[4]
-         query_args = sys.argv[6]
-    
+         query_args = sys.argv[6] if len(sys.argv) > 6 else "" 
+
         
 
  
@@ -331,6 +334,7 @@ def main():
         print(f"The file {file_path} does not exist.")
         sys.exit(1)  #  Terminate the program with an exit code
     
+
     AF = Dung(arguments, attacks)
     
     st = AF.semantics.compute_stable_extensions()
