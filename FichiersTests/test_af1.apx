@@ -1,11 +1,11 @@
-arg(A).
-arg(B)
+arg(A_).
+arg(BCD)
 arg(C).
 arg(D).
 arg(E).
-att(A,B).
-att(B,A).
-att(A,C).
-att(B,C).
+att(A_,BCD).
+att(BCD,A_).
+att(A_,C).
+att(BCD,C).
 att(C,D).
 att(D,E).

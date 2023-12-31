@@ -12,7 +12,7 @@ attacks = set()
 
 # Define a function to check if an argument name is valid
 def is_valid_argument(arg):
-    return ( arg.isalnum() or '_' for c in arg )and arg not in {"arg", "att"}
+    return arg.isalnum() and arg not in {"arg", "att"}
 
 # Define a function to process each line in the input file
 
@@ -66,19 +66,20 @@ def powerset(iterable):
 
 # Function to compute acceptability of an argument in a given set of arguments and relations
 def compute_acceptability(arg, E, relations):
-    attackers = get_arg_attackers(arg, relations)
-    if attackers is not None:
-        atks = []
-        for y in attackers:
-            yStatus = False
-            yAttackers = get_arg_attackers(y, relations)
-            if any(valid_arg in E for valid_arg in yAttackers):
-                yStatus = True
-            atks.append(yStatus)
-        return all(atks)
-    else:
-        return False
 
+	attackers = get_arg_attackers(arg, relations)
+	if attackers != None:
+		atks = []
+		for y in attackers:
+			yStatus = False
+			yAtackers = get_arg_attackers(y, relations)
+			if len(yAtackers.intersection(E)) > 0:
+				yStatus = True
+			atks.append(yStatus)
+		if all(atks):
+			return True
+		else:
+			return False
 
 # Function to check if arguments are defined in relations
 def checkArgumentsInRelations(arguments, relations):
@@ -182,7 +183,6 @@ class Dung:
 					attackers = set()
 					for cfsetmember in cfset:
 						attackers = attackers.union(get_arg_attackers(cfsetmember, rel))
-      
 					attackedbycfsmembers = []
 					for attacker in attackers:
 						atk = False
@@ -191,16 +191,15 @@ class Dung:
 							if cfsetmember in attackedby:
 								atk = True
 						attackedbycfsmembers.append(atk)
-      
 					if all(attackedbycfsmembers):
-						
 						if cfset == ():
 							admissible.append(set())
 						else:
 							d = set()
 							for k in cfset:
-								d.add(k)
-								admissible.append(d)
+								for kk in k:
+									d.add(kk)
+							admissible.append(d)
 				return admissible
 			else:
 				return []
@@ -232,7 +231,6 @@ class Dung:
 			if checkArgumentsInRelations(self.af._Dung__arguments, self.af._Dung__relations)==True:
 				compl = []
 				adm = self.af.compute_admissibility()
-    
 				if len(adm) > 0:
 					for conj in adm:
 						accArgs = set()
@@ -256,26 +254,25 @@ def decide(elem, arg,set1):
         else:
             print("NO")
     else:
-        print("N0, Argument not known")
+        print("Argument not known")
         
 
 def verify_complete(set1, arg, bigset):
-    
-    if  isinstance(set1, tuple) or set1=="":
-        if set(set1) in bigset:
-            print('YES')
-        else:
-            print('NO')
+    for argument in set1:
+        if argument not in arg:
+            print(f"Error argument \"{argument}\"  not my arguments, Please change the argument name.")
+            sys.exit(1) 
+    if set(set1) in bigset:
+        print("YES")
     else:
-        if set([set1]) in bigset:
-            print('YES')
-        else:
-            print('NO')
-        
+        print("NO")
 
 
 def verify_stable(set1, arg, bigset):
-    
+    for argument in set1:
+        if argument not in arg:
+            print(f"Error argument \"{argument}\"  not my arguments, Please change the argument name.")
+            sys.exit(1) 
     if is_combination_in_list(set1, bigset):
          print("YES")
     else:
